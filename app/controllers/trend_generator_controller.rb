@@ -10,18 +10,25 @@ class TrendGeneratorController < ActionController::API
         score += evaluate(["None", "Clutches", "Handbags", "Backpacks"], bag, 1)
         case score
             when 10..16
-                puts "Board 1"
+                url = "https://www.pinterest.com/OwnTheTrend1/outfit-inspo-1"
             when 17..21
-                puts "Board 2"
+                url = "https://www.pinterest.com/OwnTheTrend1/outfit-inspo-2"
             when 22..28
-                puts "Board 3"
+                url = "https://www.pinterest.com/OwnTheTrend1/outfit-inspo-3"
             when 29..35
-                puts "Board 4"
+                url = "https://www.pinterest.com/OwnTheTrend1/outfit-inspo-4"
             when 36..40
-                puts "Board 5"
+                url = "https://www.pinterest.com/OwnTheTrend1/outfit-inspo-5"
             else
-                puts "Board 6"
+                url = "https://www.pinterest.com/OwnTheTrend1/outfit-inspo-6"
         end
+        to_map = [{email: email, name: name}, {email: "ana@ownthetrend.com", name: "Ana Paula Tenorio"}]
+        sub_map = {
+            "%name%": name,
+            "%url%": url,
+
+        }
+        send_email(to_map, sub_map)
     end
 
     def evaluate(options, value, weight)
@@ -36,6 +43,39 @@ class TrendGeneratorController < ActionController::API
                 return 4 * weight
             else
                 return 0
+        end
+    end
+
+    def send_email(to_map, sub_map)
+        sendgrid = SendGrid::API.new(api_key: ENV['SENDGRID_API_KEY'])
+
+        json = {
+            from: {
+                email: "ana@ownthetrend.com",
+                name: "Ana from Own The Trend"
+            },
+            personalizations: [
+                {
+                    to: to_map,
+                    substitutions: sub_map
+                }
+            ],
+            template_id: "1a02968c-8603-483f-b398-1c642da580dc",
+            content: [
+                {
+                    type: "text/html",
+                    value: "<html><p></p></html>"
+                }
+            ]
+        }
+
+        data = JSON.parse(json.to_json)
+        begin
+            response = sendgrid.client.mail._('send').post(request_body: data)
+            {success: true, response: response}.to_json
+        rescue => e
+            puts "Sendgrid Error: #{e.message}"
+            halt 400, {error: "#{e.message}"}.to_json
         end
     end
 end

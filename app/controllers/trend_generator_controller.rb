@@ -1,5 +1,6 @@
 class TrendGeneratorController < ActionController::API
-    def test
-        puts "Hello World"
+    def send_link
+        name = params[:name]
+        puts "Hello #{name}"
     end
 end
